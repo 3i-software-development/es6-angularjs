@@ -34,7 +34,7 @@ function handleCompile(filepath, callback) {
   var compiledFile;
 
   if (ext === '.css') {
-    exec('./script/css', function (err) {
+    exec('node ./script/precompile.js', function (err) {
       if (err) {
         return callback(err);
       }

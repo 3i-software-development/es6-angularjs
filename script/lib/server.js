@@ -2,6 +2,8 @@
 
 'use strict';
 
+console.log('this script working');
+
 var http = require('http');
 var url = require('url');
 
@@ -32,7 +34,7 @@ var server = connect()
   })
   .use(serveStatic(options.root))
   .use(function serveIndex(req, res, next) {
-    if (req.method !== 'GET' || !req.headers.accept.match('text/html')) {
+    if (req.method !== 'GET' || !req.headers.accept?.match('text/html')) {
       return next();
     }
     send(req, '/' + options.index, { root: options.root })

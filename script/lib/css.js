@@ -2,20 +2,20 @@
 
 var path = require('path');
 
-var rework = require('rework');
-var reworkImport = require('rework-import');
-var reworkVars = require('rework-vars');
+const postcss = require("postcss");
+const atImport = require("postcss-import");
+var cssvariables = require("postcss-css-variables");
 var argv = require('minimist')(process.argv.slice(2));
 var read = require('read-file-stdin');
 var write = require('write-file-stdout');
-var autoprefixer = require('autoprefixer-core')();
+const autoprefixer = require('autoprefixer');
 
 var options = {
   input: path.resolve(argv._[0]),
   output: path.resolve(argv._[1])
 };
 
-read(options.input, function(err, buffer){
+read(options.input, function (err, buffer) {
   if (err) {
     console.error(err);
     console.error(err.stack);
@@ -23,17 +23,26 @@ read(options.input, function(err, buffer){
   var css = buffer.toString();
 
   try {
-    css = rework(css, { source: options.input })
-      .use(reworkImport())
-      .use(reworkVars())
-      .toString();
+    css = postcss()
+      .use(atImport({
+        path: ["client", "client/assets/stylesheets"],
+      }))
+      .process(css, {
+        // `from` option is needed here
+        from: options.input
+      })
+      .then((result) => {
+        const output = result.css
+        css = postcss([cssvariables(/*options*/), autoprefixer(/*options*/)])
+          .process(output).css;
 
-    css = autoprefixer.process(css);
+        write(options.output, css);
+      })
   } catch (err) {
     console.error(err);
     console.error(err.stack);
     console.error(css);
-  }
 
-  write(options.output, css);
+    write(options.output, css);
+  }
 });

@@ -1,0 +1,44 @@
+#!/usr/bin/env node
+
+// Usage: script/precompile
+// Precompiles client/app to client/app-compiled and
+
+'use strict';
+
+var glob = require('glob');
+var precompile = require('./lib/precompile');
+var mkdirp = require('mkdirp');
+var path = require('path');
+var fs = require('graceful-fs');
+
+var failed = false;
+
+function preCompile(inDir, outDir, baseDir) {
+  // Use glob.sync to get an array of file paths synchronously
+  var files = glob.sync(path.resolve(baseDir, inDir) + '/**/*');
+
+  files.forEach(function(file) {
+    var relFile = path.relative(baseDir, file);
+    var outFile = outDir + '/' + relFile.substr(inDir.length);
+
+    mkdirp.sync(path.resolve(baseDir, path.dirname(outFile)));
+
+    if (relFile.match(/^(app)\/.+\.js$/)) {
+      precompile.precompile(relFile, outFile, baseDir, function(err) {
+        if (err) throw err;
+      });
+    } else {
+      fs.readFile(file, function(err, source) {
+        if (err) {
+          if (err.code != 'EISDIR') throw err;
+        } else {
+          fs.writeFile(path.resolve(baseDir, outFile), source, function(err) {
+            if (err) throw err;
+          });
+        }
+      });
+    }
+  });
+}
+
+preCompile('app', 'app-compiled', 'client');
